@@ -1,6 +1,13 @@
-##### INTRO
+##### Intro
 
-三级级联菜单
+Level 3 cascading menu
 
-##### USAGE
+##### Usage
 
+open browser
+
+##### Technical point
+
+1. bootstrap
+2. jquery
+3. multiselect
