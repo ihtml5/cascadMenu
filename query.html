@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html class="no-js">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="description" content="">
+    <meta name="keywords" content="">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>查询统计-北京市人大议案建议管理系统</title>
+    <!-- Set render engine for 360 browser -->
+    <meta name="renderer" content="webkit">
+    <!-- No Baidu Siteapp-->
+    <meta http-equiv="Cache-Control" content="no-siteapp" />
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <meta name="apple-mobile-web-app-title" content="Amaze UI" />
+    <meta name="msapplication-TileColor" content="#0e90d2">
+    <link rel="stylesheet" href="assets/css/bootstrap.min.css">
+    <link rel="stylesheet" href="assets/css/query.css">
+    <link rel="stylesheet" href="assets/css/multiselect.css">
+</head>
+
+<body class="npc">
+    <div class="npc-queryContainer">
+        <ul class="npc-ul npc-queryCateory">
+            <li></li>
+        </ul>
+        <ul class="npc-ul npc-queryCnt">
+            <li></li>
+        </ul>
+        <ul class="npc-ul npc-queryCntContainer">
+            <li></li>
+        </ul>
+        <ul class="npc-ul npc-specialQuery">
+            <li>
+                <label>代表证编号</label>
+                <input type="text" placeholder="代表证编号" name="code" />
+            </li>
+            <li>
+                <label>代表姓名</label>
+                <input type="text" placeholder="代表姓名" name="name" />
+            </li>
+            <li>
+                <label>建议编号</label>
+                <input type="text" placeholder="建议编号" name="proposalId" />
+            </li>
+            <li>
+                <label>建议题目</label>
+                <input type="text" placeholder="建议题目" name="proposalTitle" />
+            </li>
+        </ul>
+        <div class="npc-ul npc-queryOutput">
+        </div>
+        <div class="npc-queryBtn">
+            <img src="assets/i/query.png" alt="查询" id="queryBtn" />
+        </div>
+    </div>
+    <div class="npcAlert">
+        <span class="npcAlert-close">x</span>
+        <div class="npcAlert-msg">
+        </div>
+    </div>
+    <script charset="utf-8" src="assets/js/lib/jquery.min.js"></script>
+    <script charset="utf-8" src="assets/js/lib/bootstrap.js"></script>
+    <script charset="utf-8" src="assets/js/lib/store.min.js"></script>
+    <script charset="utf-8" src="assets/js/lib/multiselect.js"></script>
+    <script charset="utf-8">
+        /*
+          des: 获取页面容器元素，并声明状态变量
+          queryObj 最后提交给后端的数据对象
+        */
+        var $queryCateory = $('.npc-queryCateory');
+        var $queryCnt = $('.npc-queryCnt');
+        var $queryCntContainer = $('.npc-queryCntContainer');
+        var $querySpecial = $('.npc-specialQuery');
+        var $queryOutput = $('.npc-queryOutput');
+        var $queryBtn = $('#queryBtn');
+        var $msgClose = $('.npcAlert-close');
+        var $msgContainer = $('.npcAlert');
+        var $msgCnt = $('.npcAlert-msg');
+        var queryCateory = [];
+        var queryCnt = [];
+        var queryCntContainer = [];
+        var queryOutput = [];
+        var checkState = [];
+        var queryObj = {};
+        var genCurrentActive = null;
+        var genActivePos = null;
+        var genIds = null;
+        var comType =  null;
+        var queryParams = null;
+        var existIds = null;
+        var queryDate = new Date();
+        var dateStr = 'query-'+queryDate.getFullYear()+"-"+(queryDate.getMonth()+1)+"-"+queryDate.getDate();
+        var queryCount = 0;
+        if(store.get(dateStr)) {
+            queryParams = store.get(dateStr);
+            console.log('数据已经拿到! 看下面^_^');
+            console.log(queryParams);
+        } else {
+            queryParams = {
+                'active': 'audit',
+                'audit': {
+                    name: '建议办理情况',
+                    comtype: 'text',
+                    ids: [],
+                    max: 1,
+                    childrenCnt: {
+                        'active': 'assSystem',
+                        'childKeys': ['assSystem', 'propoaslSys'],
+                        'children': [{
+                            name: '交办系统',
+                            comType: 'text',
+                            ids: [],
+                            max: 1,
+                            childKeys: [],
+                            children: [{
+                                name: '通过',
+                                comType: 'text',
+                                ids: [],
+                                childKeys: [],
+                                max: 1,
+                                children: []
+                            }, {
+                                name: '未通过',
+                                comType: 'text',
+                                ids: [],
+                                childKeys: [],
+                                max: 1,
+                                children: []
+                            }, {
+                                name: '待定',
+                                comType: 'text',
+                                ids: [],
+                                childKeys: [],
+                                max: 1,
+                                children: []
+                            }]
+                        }, {
+                            name: '市人大',
+                            comType: 'text',
+                            childKeys: [],
+                            max: 1,
+                            ids: [],
+                            children: [{
+                                name: '党委',
+                                comType: 'text',
+                                ids: [],
+                                childKeys: [],
+                                max: 1,
+                                children: []
+                            }, {
+                                name: '书记',
+                                comType: 'text',
+                                ids: [],
+                                childKeys: [],
+                                max: 1,
+                                children: []
+                            }, {
+                                name: '一把手',
+                                comType: 'text',
+                                ids: [],
+                                childKeys: [],
+                                max: 1,
+                                children: []
+                            }]
+                        }]
+                    }
+                },
+                'assignSystem': {
+                    name: '建议类别',
+                    comType: 'text',
+                    ids: [],
+                    max: 1,
+                    childrenCnt: {
+                        'active': '',
+                        'childKeys': ['assSystem'],
+                        'children': [{
+                            name: '前端开发',
+                            max: 1,
+                            ids: [],
+                            comType: 'select',
+                            childKeys: [35,37,38],
+                            children: [{
+                                name: 'html',
+                                comType: 'text',
+                                ids: [],
+                                childKeys: [],
+                                max: 1,
+                                children: []
+                            }, {
+                                name: 'css',
+                                comType: 'text',
+                                ids: [],
+                                childKeys: [],
+                                max: 1,
+                                children: []
+                            }, {
+                                name: 'javascript',
+                                comType: 'text',
+                                ids: [],
+                                childKeys: [],
+                                max: 1,
+                                children: []
+                            }]
+                        }]
+                    }
+                }
+            };
+        }
+        /*
+          des: input autocomplete
+          author: ihtml5,
+          datetime: 20160624
+        */
+        function decodeKey(val) {} 
+        function encodeKey(val) {}
+        function autoInput($els) {
+            $els.on('input', function(event) {
+                queryObj[event.target.name] = event.target.value;
+            });
+            if (document.all) {
+                $els.each(function() {
+                    var that = this;
+                    if (this.attachEvent) {
+                        this.attachEvent('onpropertychange', function(e) {
+                            if (e.propertyName != 'value') return;
+                            $(that).trigger('input');
+                        });
+                    }
+                })
+            }
+        }
+
+        function genCnt(queryParams) {
+            $.each(queryParams, function(queryK, queryV) {
+                if (queryK == 'active') return;
+                if (queryK == queryParams['active']) {
+                    queryCateory.push(
+                        '<li class="npc-cateoryActive ' + queryK + '">' + queryV['name'] + '</li>');
+                    return;
+                }
+                queryCateory.push('<li class="' + queryK + '">' + queryV['name'] + '</li>');
+            });
+            $queryCateory.html(queryCateory.join(''));
+            genChilds(queryParams);
+            checkState = [];
+        }
+        function hasSelected(len,selectedLen) {
+            return len === selectedLen;
+        }
+        function genDeepChilds(childs) {
+            genCurrentActive = queryParams[queryParams['active']]['childrenCnt'];
+            genActivePos = genCurrentActive['childKeys'].indexOf(genCurrentActive['active']);
+            genIds = genCurrentActive['children'][genActivePos]['ids'];
+            comType =  genCurrentActive['children'][genActivePos]['comType'];
+            console.clear();
+            console.info('childs',childs,genCurrentActive['children'][genActivePos]);
+            var genIdsToStr = genIds.map(function(el,index) {
+                return genCurrentActive['children'][genActivePos]['childKeys'][el];
+            });
+            if(comType == 'text') {
+                $.each(childs, function(tarK, tarV) {
+                    if(genIds.indexOf(tarK)>-1) {
+                          queryCntContainer.push('<li class="level2-' + tarK + '" style="color:#fefeff;background-color:#c70f0f">' + tarV['name'] + '</li>');
+                        return;
+                    }
+                    queryCntContainer.push('<li class="level2-' + tarK + '">' + tarV['name'] + '</li>');
+                });
+                $queryCntContainer.html(queryCntContainer.join(''));
+                queryCntContainer = [];
+            } else if (comType == 'select') {
+                $.each(childs, function(tarK, tarV) {
+                    if (genIds.indexOf(genCurrentActive['children'][genActivePos]['childKeys'][tarK])>-1) {
+                        queryCntContainer.push('<option class="level2-' + tarK + '" value="'+genCurrentActive['children'][genActivePos]['childKeys'][tarK]+'" selected="selected">' + tarV['name'] + '</option>');
+                        return;
+                    }
+                    queryCntContainer.push('<option class="level2-' + tarK + '" value="'+genCurrentActive['children'][genActivePos]['childKeys'][tarK]+'" >' + tarV['name'] + '</option>');
+                });
+                $queryCntContainer.html('<select multiple="multiple" class="npc-search-select">'+queryCntContainer.join('')+'</select>');
+                $('.npc-search-select').multiselect({
+                    enableFiltering:true,
+                    filterPlaceholder: '搜索',
+                    moveSelectedToTop: true,
+                    maxHeight: 200,
+                    buttonText: function(options) {
+                        if (options.length === 0) {
+                            return '没有一项被选中';
+                        } else if (options.length>2) {
+                            return '有'+ options.length + '被选中';
+                        } else {
+                            var selected = [];
+                            options.each(function() {
+                                selected.push([$(this).text(),$(this).data('order')]);
+                            });
+                            selected.sort(function(a,b) {
+                                return a[1] - b[1]
+                            });
+                            var text = '';
+                            for (var i = 0; i < selected.length; i++) {
+                                text += selected[i][0] + ', '
+                            }
+                            return text.substr(0,text.length-2);
+                        }
+                    }
+                });
+                $('.npc-search-select').multiselect('select',genIdsToStr);
+                $('.npc-search-select').hide();
+            }
+            queryCntContainer = [];
+        }
+
+        function genChilds(queryParams) {
+            var childs = queryParams[queryParams['active']]['childrenCnt']['children'];
+            var ids = queryParams[queryParams['active']]['ids'];
+            $.each(childs, function(childK, childV) {
+                if (ids.indexOf(childK) > -1) {
+                    queryCnt.push('<li class="level1-' + childK + '" style="color:#fefeff;background-color:#c70f0f">' + childV['name'] + '</li>');
+                    return;
+                }
+                queryCnt.push('<li class="level1-' + childK + '">' + childV['name'] + '</li>');
+            });
+            $queryCnt.html(queryCnt.join(''));
+            queryCnt = [];
+        }
+        function forEachQ(queryParams) {
+            console.clear();
+            console.log(queryParams);
+            //console.clear();
+            $queryOutput.html('');
+            for (var iq in queryParams ) {
+                if(iq == 'active') continue;
+                console.log(queryParams[iq]['ids'],queryParams[iq]['childrenCnt']['children']);
+                queryParams[iq]['childrenCnt']['children'].map(function(el,index) {
+                    if(el['ids'].length === 0) {
+                        queryCount+=1;
+                        return;
+                    }
+                    queryOutput.push('<span class="npc-query-level2">'+el['name']+':</span>');
+                    el['ids'].map(function(iel,iidex) {
+                        //console.log(el['name'],iel,iidex);
+                        //console.log(el['children'][iidex]['name']);
+                        queryOutput.push('<span class="npc-query-level3">'+el['children'][iel]['name']+'</span>');
+                    });
+                });
+                console.log('queryCount',queryCount);
+                if (hasSelected(queryCount,queryParams[iq]['childrenCnt']['children'].length)) {
+                    $queryOutput.html('');
+                    queryCount = 0;
+                } else {
+                    console.log('queryCount',queryCount);
+                    queryOutput.unshift('<span class="npc-query-level1">'+queryParams[iq]['name']+':</span>');
+                    $queryOutput.append('<div class="npc-query-item">'+queryOutput.join('')+'</div>');
+                    queryCount = 0;
+                }
+                queryOutput = [];
+            }
+        }
+        /*
+            des: 通过事件代理绑定事件
+        */
+        function bindEvent() {
+            $queryCateory.on('mouseover', function(event) {
+                if (event.target.tagName !== 'LI') {
+                    return;
+                }
+                var $queryCateoryLis = $queryCateory.find('li');
+                $queryCateoryLis.removeClass('npc-cateoryActive').addClass('npc-nocateoryActive');
+                $(event.target).addClass('npc-cateoryActive');
+                for (var i in queryParams) {
+                    if ($(event.target).hasClass(i)) {
+                        queryParams['active'] = i.toString();
+                    }
+                }
+                genChilds(queryParams);
+                $queryCntContainer.html('');
+                $querySpecial.css({
+                    'border-top': 'none'
+                });
+            });
+            $msgClose.on('click', function() {
+                $msgContainer.addClass('npcAlert-fade');
+            })
+            $queryCnt.on('mouseover', function(event) {
+                if (event.target.tagName !== 'LI') return;
+                var $queryCntLis = $queryCnt.find('li');
+                var cls = event.target.className;
+                var pos = Number(cls.split('-')[1]);
+                var currentActive = queryParams[queryParams['active']]['childrenCnt'];
+                queryParams[queryParams['active']]['childrenCnt']['active'] = currentActive['childKeys'][pos];
+                var curActive = currentActive['childKeys'][pos];
+                var currentChilds = currentActive['children'][pos]['children'];
+                console.clear();
+                console.log(currentChilds,pos);
+                $queryCntLis.css({
+                    'color': '#6f6f6f',
+                    'background-color': 'transparent'
+                });
+                $(event.target).css({
+                    'color': '#fefeff',
+                    'background-color': '#c70f0f'
+                });
+                $querySpecial.css({
+                    'border-top': '1px solid #e7e7e7'
+                });
+                genDeepChilds(currentChilds);
+                forEachQ(queryParams);
+            });
+            $queryCntContainer.change(function(event) {
+                if(event.target.value.length === 0 || event.target.tagName!== 'INPUT') return;
+                var iactivePos = queryParams[queryParams['active']]['childrenCnt']['childKeys'].indexOf(queryParams[queryParams['active']]['childrenCnt']['active']);
+                var irealV = Number(event.target.value);
+                var ipos = queryParams[queryParams['active']]['childrenCnt']['children'][iactivePos]['childKeys'].indexOf(irealV);
+                existIds = queryParams[queryParams['active']]['childrenCnt']['children'][iactivePos]['ids'];
+                console.log('change 执行了');
+                if (existIds.indexOf(ipos)>-1) {
+                    console.log('已存在');
+                    existIds.splice(existIds.indexOf(ipos), 1);
+                    queryParams[queryParams['active']]['childrenCnt']['children'][iactivePos]['ids'] = existIds;
+                    console.log(existIds);
+                    existIds = null;
+                    forEachQ(queryParams);
+                    return;
+                }
+                existIds.push(ipos);
+                queryParams[queryParams['active']]['childrenCnt']['children'][iactivePos]['ids'] = existIds;
+                console.log(queryParams[queryParams['active']]['childrenCnt']['children'][iactivePos]['ids']);
+                existIds = null;
+                store.set(dateStr,queryParams);
+                forEachQ(queryParams);
+            });
+            $queryCntContainer.on('click', function(event) {
+                if (event.target.tagName !== 'LI') return;
+                console.log('click 执行了');
+                var $queryCntContainerLis = $queryCntContainer.find('li');
+                var cls = event.target.className;
+                var pos = Number(cls.split('-')[1]);
+                var currentActive = queryParams[queryParams['active']]['childrenCnt'];
+                var activePos = currentActive['childKeys'].indexOf(currentActive['active']);
+                console.clear();
+                console.log(activePos,currentActive['children'][activePos]);
+                //console.log(currentActive);
+                if (checkState.indexOf(pos) > -1) {
+                    $(event.target).css({
+                        'color': '#6f6f6f',
+                        'background-color': 'transparent'
+                    });
+                    checkState.splice(checkState.indexOf(pos), 1);
+                    currentActive['children'][activePos]['ids'].splice(currentActive['children'][activePos]['ids'].indexOf(pos), 1);
+                    console.clear();
+                    console.log(currentActive['children'][activePos]['ids']);
+                    store.set(dateStr,queryParams);
+                    forEachQ(queryParams);
+                    return;
+                }
+                $(event.target).css({
+                    'color': '#fefeff',
+                    'background-color': '#c70f0f'
+                });
+                checkState.push(pos);
+
+                currentActive['children'][activePos]['ids'].push(pos);
+                console.log(checkState,currentActive, currentActive['children'][activePos]['ids']);
+                store.set(dateStr,queryParams);
+                forEachQ(queryParams);
+            });
+            $queryBtn.on('click', function(event) {
+                var imax = null;
+                for (var j in queryParams) {
+                    if (j == 'active') continue;
+                    queryObj[j] = queryParams[j]['ids'];
+                }
+                console.log(queryObj);
+            });
+            autoInput($('.npc-specialQuery input'));
+            /*
+                des: 监听本地存储是否更改
+            */
+            window.addEventListener("storage", function(e){ 
+                console.log(e.oldValue,e.url,e.key);
+                /*
+                if (!e.newValue) {
+                    window.location.reload();
+                }
+                */
+            });  
+        }
+        $(document).ready(function() {
+            genCnt(queryParams);
+            bindEvent();
+            forEachQ(queryParams);
+        });
+    </script>
+</body>
+
+</html>
