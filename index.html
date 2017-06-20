@@ -223,8 +223,8 @@
             if (document.all) {
                 $els.each(function() {
                     var that = this;
-                    if (this.attachEvent) {
-                        this.attachEvent('onpropertychange', function(e) {
+                    if (that.attachEvent) {
+                        that.attachEvent('onpropertychange', function(e) {
                             if (e.propertyName != 'value') return;
                             $(that).trigger('input');
                         });
